@@ -1,0 +1,326 @@
+Turbo Assembler	 Version 4.1	    10/04/16 15:13:54	    Page 1
+Lab3.asm
+
+
+
+      1	0000			     .MODEL  SMALL
+      2	0000			     .STACK  266
+      3	0000			     .DATA
+      4	0000  49 6E 70 75 74 20	53+	     Instring	  DB 'Input String: $',0AH, 0DH
+      5	      74 72 69 6E 67 3A	20+
+      6	      24 0A 0D
+      7	0011  53 74 72 69 6E 67	20+	     consString	  DB 'String contains: $',0AH, 0DH
+      8	      63 6F 6E 74 61 69	6E+
+      9	      73 3A 20 24 0A 0D
+     10	0025  20 63 61 70 69 74	61+	     capEnding	  DB ' capital letter(s).$',0AH,0DH
+     11	      6C 20 6C 65 74 74	65+
+     12	      72 28 73 29 2E 24	0A+
+     13	      0D
+     14	003B  09 20 73 6D 61 6C	6C+	     lowerEnding  DB 09H," small letter(s).$"
+     15	      20 6C 65 74 74 65	72+
+     16	      28 73 29 2E 24
+     17	004E  09 20 6E 75 6D 62	65+	     digitEnging  DB 09H,' number(s).$'
+     18	      72 28 73 29 2E 24
+     19	005B  09 20 73 79 6D 62	6F+	     symbEnding	  DB 09H,' symbol(s).$'
+     20	      6C 28 73 29 2E 24
+     21
+     22	0068  0A 0D 24			     Break	  DB  0AH,0DH,'$'  ; new line
+     23
+     24	006B  64			     Buffer	  DB   100	   ; max number(100) of	chars expected
+     25	006C  ??			     Num	  DB   ?	   ; returns the number	of chars typed
+     26	006D  64*(??)			     Act_Buf	  DB   100 DUP (?) ; actual buffer w/ size=“max	number”
+     27	00D1  00			     digit	  DB   0H
+     28	00D2  00			     capital	  DB   0H
+     29	00D3  00			     lower	  DB   0H
+     30	00D4  00			     symb	  DB   0H
+     31	00D5			     .CODE
+     32					     .STARTUP
+1    33	0000			     @Startup:
+1    34	0000  BA 0000s			     MOV     DX,@data
+1    35	0003  8E DA			     MOV     DS,DX
+1    36	0005  8C D3			     MOV     BX,SS
+1    37	0007  2B DA			     SUB     BX,DX
+1    38	0009  D1 E3 D1 E3 D1 E3	D1+	     SHL     BX,4
+     39	      E3
+1    40	0011  FA			     CLI
+1    41	0012  8E D2			     MOV     SS,DX
+1    42	0014  03 E3			     ADD     SP,BX
+1    43	0016  FB			     STI
+     44	0017			     MAIN    PROC FAR
+     45	0017  B8 0000s			     MOV  AX,@data
+     46	001A  8E D8			     MOV  DS,AX
+     47	001C  8E C0			     MOV  ES,AX
+     48	001E  B8 0000			     MOV  AX,0000H
+     49	0021  B9 0000			     MOV  CX,0000H
+     50
+     51					     ;Input String
+     52	0024  BA 006Br			     MOV  DX,OFFSET Buffer
+     53	0027  B4 0A			     MOV  AH,0AH
+     54	0029  CD 21			     INT 21H
+     55
+     56					     ; Display	new line
+     57	002B  BA 0068r			     MOV DX, OFFSET Break
+Turbo Assembler	 Version 4.1	    10/04/16 15:13:54	    Page 2
+Lab3.asm
+
+
+
+     58	002E  B4 09			     MOV AH,09H
+     59	0030  CD 21			     INT 21H
+     60
+     61					     ; Display	"You Entered" string
+     62	0032  BA 0000r			     MOV DX, OFFSET Instring
+     63	0035  B4 09			     MOV AH,09H
+     64	0037  CD 21			     INT 21H
+     65
+     66					     ;Put dollar sign at the end of the	string
+     67	0039  BE 006Cr			     MOV SI, OFFSET Buffer + 1
+     68	003C  8A 0C			     MOV CL, [SI]
+     69	003E  B5 00			     MOV CH, 0
+     70	0040  41			     INC CX
+     71	0041  03 F1			     ADD SI, CX
+     72	0043  B0 24			     MOV AL, '$'
+     73	0045  88 04			     MOV [SI], AL
+     74
+     75					     ;Print the	user's input string
+     76	0047  B4 09			     MOV AH, 09H
+     77	0049  BA 006Dr			     MOV DX, OFFSET Buffer + 2
+     78	004C  CD 21			     INT 21H
+     79
+     80					     ;Display  new line
+     81	004E  BA 0068r			     MOV DX, OFFSET Break
+     82	0051  B4 09			     MOV AH,09H
+     83	0053  CD 21			     INT 21H
+     84
+     85	0055  BE 006Cr			     MOV SI, OFFSET Buffer + 1
+     86	0058  8A 0C			     MOV CL, [SI]
+     87	005A  B5 00			     MOV CH, 00H
+     88
+     89	005C  BE 006Dr			     MOV SI, OFFSET Buffer + 2	  ;set SI to the beginning of the string
+     90	005F			     start_looking:
+     91	005F  46			     INC  SI
+     92	0060  8A 44 FF			     MOV AL, [SI-1]
+     93
+     94	0063  83 F9 00			     CMP CX, 00H	  ;check if the	end of string is reached
+     95	0066  74 39			     JE	finish		      ;if it is	the end	then go	to finish label
+     96	0068  49			     DEC CX
+     97	0069			     check_aph:
+     98
+     99					     ;if( AL > 61H && AL < 7AH)
+    100	0069  3C 61			     CMP AL, 61H
+    101	006B  72 0A			     JB	check_Upaph
+    102	006D  3C 7A			     CMP AL, 7AH
+    103	006F  77 22			     JA	others
+    104
+    105					     ;True
+    106	0071  FE 06 00D3r		     INC [lower]	       ;increment the lower variable by	1 if meet condition
+    107	0075  EB E8			     JMP start_looking	     ;back to the start_looking	label
+    108
+    109	0077			     check_Upaph:
+    110
+    111					     ;if( AL > 41H && AL < 5A)
+    112	0077  3C 41			     CMP AL, 41H
+    113	0079  72 0A			     JB	check_dig
+    114	007B  3C 5A			     CMP AL, 5AH
+Turbo Assembler	 Version 4.1	    10/04/16 15:13:54	    Page 3
+Lab3.asm
+
+
+
+    115	007D  77 14			     JA	others
+    116
+    117					     ;true
+    118	007F  FE 06 00D2r		     INC [capital]	       ;increment the capital variable by 1 if meet condition
+    119	0083  EB DA			     JMP start_looking	     ;back to the start_looking	label
+    120
+    121	0085			     check_dig:
+    122
+    123					     ;if(AL > 30H && AL	< 39H)
+    124	0085  3C 30			     CMP AL, 30H
+    125	0087  72 0A			     JB	others
+    126	0089  3C 39			     CMP AL, 39h
+    127	008B  77 06			     JA	others
+    128
+    129					     ;true
+    130	008D  FE 06 00D1r		     INC [digit]	       ;increment the digit variable by	1 if meet condition
+    131	0091  EB CC			     JMP start_looking	     ;back to the start_looking	label
+    132
+    133	0093			     others:
+    134
+    135					     ;if( AL ==	20H || AL == 09H )
+    136	0093  3C 20			     CMP AL, 20H
+    137	0095  74 C8			     JE	start_looking
+    138	0097  3C 09			     CMP AL, 09H
+    139	0099  74 C4			     JE	start_looking
+    140
+    141					     ;none of the above
+    142	009B  FE 06 00D4r		     INC [symb]		       ;increment the symb variable by 1  if meet condition
+    143	009F  EB BE			     JMP start_looking	     ;back to the start_looping	label
+    144	00A1			     finish:
+    145					     ;Display "String contains:" string
+    146	00A1  BA 0011r			     MOV DX, OFFSET consString
+    147	00A4  B4 09			     MOV AH,09H
+    148	00A6  CD 21			     INT 21H
+    149
+    150					     ;Display total number of capitals
+    151	00A8  BE 00D2r			     MOV SI, OFFSET capital
+    152	00AB  8A 04			     MOV AL, [SI]
+    153	00AD  D4 0A			     AAM
+    154	00AF  05 3030			     ADD AX, 3030H
+    155	00B2  BA 0000			     MOV DX, 0
+    156	00B5  8B D8			     MOV BX, AX
+    157	00B7  8A D7			     MOV DL,BH	     ;OUTPUT TENS DIGIT
+    158	00B9  B4 02			     MOV AH,02H
+    159	00BB  CD 21			     INT 21H
+    160
+    161	00BD  8A D3			     MOV DL, BL	     ; OUTPUT ONES DIGIT
+    162	00BF  B4 02			     MOV AH,02H
+    163	00C1  CD 21			     INT 21H
+    164
+    165					     ;Display capital letter(s)	string
+    166	00C3  BA 0025r			     MOV DX, OFFSET capEnding
+    167	00C6  B4 09			     MOV AH,09H
+    168	00C8  CD 21			     INT 21H
+    169
+    170					     ; Display	new line
+    171	00CA  BA 0068r			     MOV DX, OFFSET Break
+Turbo Assembler	 Version 4.1	    10/04/16 15:13:54	    Page 4
+Lab3.asm
+
+
+
+    172	00CD  B4 09			     MOV AH,09H
+    173	00CF  CD 21			     INT 21H
+    174
+    175					     ;Display total number of small letter
+    176	00D1  BE 00D3r			     MOV SI, OFFSET lower
+    177	00D4  8A 04			     MOV AL, [SI]
+    178	00D6  D4 0A			     AAM
+    179	00D8  05 3030			     ADD AX, 3030H
+    180	00DB  BA 0000			     MOV DX, 0
+    181	00DE  8B D8			     MOV BX, AX
+    182	00E0  8A D7			     MOV DL,BH	     ;OUTPUT TENS DIGIT
+    183	00E2  B4 02			     MOV AH,02H
+    184	00E4  CD 21			     INT 21H
+    185
+    186	00E6  8A D3			     MOV DL, BL	     ; OUTPUT ONES DIGIT
+    187	00E8  B4 02			     MOV AH,02H
+    188	00EA  CD 21			     INT 21H
+    189					     ;Display small letter(s) string
+    190	00EC  BA 003Br			     MOV DX, OFFSET lowerEnding
+    191	00EF  B4 09			     MOV AH,09H
+    192	00F1  CD 21			     INT 21H
+    193
+    194					     ; Display	new line
+    195	00F3  BA 0068r			     MOV DX, OFFSET Break
+    196	00F6  B4 09			     MOV AH,09H
+    197	00F8  CD 21			     INT 21H
+    198
+    199					     ;Display total number of digit
+    200	00FA  BE 00D1r			     MOV SI, OFFSET digit
+    201	00FD  8A 04			     MOV AL, [SI]
+    202	00FF  D4 0A			     AAM
+    203	0101  05 3030			     ADD AX, 3030H
+    204	0104  BA 0000			     MOV DX, 0
+    205	0107  8B D8			     MOV BX, AX
+    206	0109  8A D7			     MOV DL,BH	     ;OUTPUT TENS DIGIT
+    207	010B  B4 02			     MOV AH,02H
+    208	010D  CD 21			     INT 21H
+    209
+    210	010F  8A D3			     MOV DL, BL	     ; OUTPUT ONES DIGIT
+    211	0111  B4 02			     MOV AH,02H
+    212	0113  CD 21			     INT 21H
+    213					     ;Display number(s)	string
+    214	0115  BA 004Er			     MOV DX, OFFSET digitEnging
+    215	0118  B4 09			     MOV AH,09H
+    216	011A  CD 21			     INT 21H
+    217
+    218					     ; Display	new line
+    219	011C  BA 0068r			     MOV DX, OFFSET Break
+    220	011F  B4 09			     MOV AH,09H
+    221	0121  CD 21			     INT 21H
+    222
+    223					     ;Display total number of symbol
+    224	0123  BE 00D4r			     MOV SI, OFFSET symb
+    225	0126  8A 04			     MOV AL, [SI]
+    226	0128  D4 0A			     AAM
+    227	012A  05 3030			     ADD AX, 3030H
+    228	012D  BA 0000			     MOV DX, 0
+Turbo Assembler	 Version 4.1	    10/04/16 15:13:54	    Page 5
+Lab3.asm
+
+
+
+    229	0130  8B D8			     MOV BX, AX
+    230	0132  8A D7			     MOV DL,BH	     ;OUTPUT TENS DIGIT
+    231	0134  B4 02			     MOV AH,02H
+    232	0136  CD 21			     INT 21H
+    233
+    234	0138  8A D3			     MOV DL, BL	     ; OUTPUT ONES DIGIT
+    235	013A  B4 02			     MOV AH,02H
+    236	013C  CD 21			     INT 21H
+    237					     ;Display symbol(s)	string
+    238	013E  BA 005Br			     MOV DX, OFFSET symbEnding
+    239	0141  B4 09			     MOV AH,09H
+    240	0143  CD 21			     INT 21H
+    241
+    242
+    243					     .Exit
+1   244	0145  B4 4C			     MOV     AH,4Ch
+1   245	0147  CD 21			     INT     21h
+    246	0149			     MAIN    ENDP
+    247				     END
+Turbo Assembler	 Version 4.1	    10/04/16 15:13:54	    Page 6
+Symbol Table
+
+
+
+
+Symbol Name			  Type	 Value
+
+??DATE				  Text	 "10/04/16"
+??FILENAME			  Text	 "Lab3	  "
+??TIME				  Text	 "15:13:54"
+??VERSION			  Number 040A
+@32BIT				  Text	 0
+@CODE				  Text	 _TEXT
+@CODESIZE			  Text	 0
+@CPU				  Text	 0101H
+@CURSEG				  Text	 _TEXT
+@DATA				  Text	 DGROUP
+@DATASIZE			  Text	 0
+@FILENAME			  Text	 LAB3
+@INTERFACE			  Text	 000H
+@MODEL				  Text	 2
+@STACK				  Text	 DGROUP
+@STARTUP			  Near	 _TEXT:0000
+@WORDSIZE			  Text	 2
+ACT_BUF				  Byte	 DGROUP:006D
+BREAK				  Byte	 DGROUP:0068
+BUFFER				  Byte	 DGROUP:006B
+CAPENDING			  Byte	 DGROUP:0025
+CAPITAL				  Byte	 DGROUP:00D2
+CHECK_APH			  Near	 _TEXT:0069
+CHECK_DIG			  Near	 _TEXT:0085
+CHECK_UPAPH			  Near	 _TEXT:0077
+CONSSTRING			  Byte	 DGROUP:0011
+DIGIT				  Byte	 DGROUP:00D1
+DIGITENGING			  Byte	 DGROUP:004E
+FINISH				  Near	 _TEXT:00A1
+INSTRING			  Byte	 DGROUP:0000
+LOWER				  Byte	 DGROUP:00D3
+LOWERENDING			  Byte	 DGROUP:003B
+MAIN				  Far	 _TEXT:0017
+NUM				  Byte	 DGROUP:006C
+OTHERS				  Near	 _TEXT:0093
+START_LOOKING			  Near	 _TEXT:005F
+SYMB				  Byte	 DGROUP:00D4
+SYMBENDING			  Byte	 DGROUP:005B
+
+Groups & Segments		  Bit Size Align  Combine Class
+
+DGROUP				  Group
+  STACK				  16  010A Para	  Stack	  STACK
+  _DATA				  16  00D5 Word	  Public  DATA
+_TEXT				  16  0149 Word	  Public  CODE
+

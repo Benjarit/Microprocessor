@@ -1,0 +1,393 @@
+Turbo Assembler	 Version 4.1	    10/12/16 00:29:47	    Page 1
+lab4.asm
+
+
+
+      1				     ;LAB 4 PROGRAM
+      2				     ;FILENAME:	lab4.asm
+      3				     ;FILE TYPE: EXE
+      4	0000			     .MODEL MEDIUM
+      5	0000			     .STACK 1024
+      6				     PRINT_NEWLINE macro NEWLINE
+      7					       LEA DX, NEWLINE
+      8					       MOV AH, 09H
+      9					       INT 21H
+     10				     endm
+     11				     PRINT_STRING macro	CHARA
+     12					       LEA DX, CHARA
+     13					       MOV AH, 09H
+     14					       INT 21H
+     15				     endm
+     16				     READ_IN_STRING macro STRING2
+     17					       LEA DX, STRING2
+     18					       MOV AH, 0AH
+     19					       INT 21H
+     20				     endm
+     21				     RESET_OP macro OPE
+     22					       MOV AL, 24H
+     23					       LEA DI, OPE
+     24					       MOV CX, 10
+     25					       CLD
+     26					       REP STOSB
+     27				     endm
+     28	0000			     .DATA
+     29	0000  14			  Buffer   DB 20
+     30	0001  ??			  NUM	   DB ?
+     31	0002  14*(24)			  ACT_BUF  DB 20 DUP('$')
+     32
+     33	0016  02			  AGAIN2	DB 2
+     34	0017  ??			  NUM2		DB ?
+     35	0018  02*(24)			  AGAIN2_BUF	DB 2 DUP('$')
+     36
+     37	001A  0D 0A 45 6E 74 65	72+	  MSG	       DB 0DH,0AH,'Enter an algebraic command line:',0DH,0AH,'$'
+     38	      20 61 6E 20 61 6C	67+
+     39	      65 62 72 61 69 63	20+
+     40	      63 6F 6D 6D 61 6E	64+
+     41	      20 6C 69 6E 65 3A	0D+
+     42	      0A 24
+     43	003F  0D 0A 24			  NEWLINE      DB 0DH,0AH,'$'
+     44	0042  45 72 72 6F 72 2C	20+	  MSG_ERROR    DB 'Error, invalid input',0DH,0AH,'Input	format:	Operand1 Operator Operand2',+
+     45	      69 6E 76 61 6C 69	64+  0DH,0AH,'Operand: decimal numbers',0DH,0AH,'Operator: + - * / %$'
+     46	      20 69 6E 70 75 74	0D+
+     47	      0A 49 6E 70 75 74	20+
+     48	      66 6F 72 6D 61 74	3A+
+     49	      20 4F 70 65 72 61	6E+
+     50	      64 31 20 4F 70 65	72+
+     51	      61 74 6F 72 20 4F	70+
+     52	      65 72 61 6E 64 32	0D+
+     53	      0A 4F 70 65 72 61	6E+
+     54	      64 3A 20 64 65 63	69+
+     55	      6D 61 6C 20 6E 75	6D+
+     56	      62 65 72 73 0D 0A	4F+
+     57	      70 65 72 61 74 6F	72+
+Turbo Assembler	 Version 4.1	    10/12/16 00:29:47	    Page 2
+lab4.asm
+
+
+
+     58	      3A 20 2B 20 2D 20	2A+
+     59	      20 2F 20 25 24
+     60	00B0  41 67 61 69 6E 3F	3A+	  AGAIN	       DB 'Again?: $'
+     61	      20 24
+     62
+     63	00B9  0A*(24)			  OP1_BUFF	      DB 10 DUP('$')
+     64	00C3  0A*(24)			  OP2_BUFF	      DB 10 DUP('$')
+     65	00CD  0A*(24)			  OPERATOR_BUFF	      DB 10 DUP('$')
+     66	00D7  0A*(24)			  RESULT_BUFF	      DB 10 DUP('$')
+     67
+     68
+     69	00E1  00			  OP1_S	      DB 0
+     70	00E2  00			  OP2_S	      DB 0
+     71	00E3  00			  OP1	      DB 0
+     72	00E4  00			  OP2	      DB 0
+     73	00E5  00			  OPERATOR    DB 0
+     74	00E6  00			  RESULT      DB 0
+     75	00E7  00			  SET_FALSE   DB 0H
+     76
+     77	00E8			     .CODE
+     78					  .STARTUP
+1    79	0000			     @Startup:
+1    80	0000  BA 0000s			     MOV     DX,@data
+1    81	0003  8E DA			     MOV     DS,DX
+1    82	0005  8C D3			     MOV     BX,SS
+1    83	0007  2B DA			     SUB     BX,DX
+1    84	0009  D1 E3 D1 E3 D1 E3	D1+	     SHL     BX,4
+     85	      E3
+1    86	0011  FA			     CLI
+1    87	0012  8E D2			     MOV     SS,DX
+1    88	0014  03 E3			     ADD     SP,BX
+1    89	0016  FB			     STI
+     90	0017			     MAIN PROC FAR
+     91	0017			     START:
+     92	0017  B8 0000s			       MOV AX,@DATA	    ;startup
+     93	001A  8E D8			       MOV DS,AX
+     94	001C  8E C0			       MOV ES,AX
+     95				     ;-----------------PARSING START----------------------------------------
+     96
+     97	001E  E8 005C			       CALL INPUT
+     98
+     99				     ;-----------------once SET_FALSE =	1 WE SKIP PRINTING DATA	OUT---------
+    100	0021  BE 00E7r			       LEA SI, SET_FALSE
+    101	0024  8A 04			       MOV AL, [SI]
+    102	0026  3C 01			       CMP AL, 1H
+    103	0028  74 2D			       JE DONE
+    104
+    105				     ;------------PRINT	DATA PARSING OUT-----------------------------------
+    106	002A  B8 0000			       MOV AX, 0000H
+    107					       PRINT_STRING NEWLINE
+1   108	002D  BA 003Fr			       LEA DX, NEWLINE
+1   109	0030  B4 09			       MOV AH, 09H
+1   110	0032  CD 21			       INT 21H
+    111					       PRINT_STRING OP1_BUFF
+1   112	0034  BA 00B9r			       LEA DX, OP1_BUFF
+1   113	0037  B4 09			       MOV AH, 09H
+1   114	0039  CD 21			       INT 21H
+Turbo Assembler	 Version 4.1	    10/12/16 00:29:47	    Page 3
+lab4.asm
+
+
+
+    115					       PRINT_STRING NEWLINE
+1   116	003B  BA 003Fr			       LEA DX, NEWLINE
+1   117	003E  B4 09			       MOV AH, 09H
+1   118	0040  CD 21			       INT 21H
+    119					       PRINT_STRING OP2_BUFF
+1   120	0042  BA 00C3r			       LEA DX, OP2_BUFF
+1   121	0045  B4 09			       MOV AH, 09H
+1   122	0047  CD 21			       INT 21H
+    123					       PRINT_STRING NEWLINE
+1   124	0049  BA 003Fr			       LEA DX, NEWLINE
+1   125	004C  B4 09			       MOV AH, 09H
+1   126	004E  CD 21			       INT 21H
+    127					       PRINT_STRING OPERATOR_BUFF
+1   128	0050  BA 00CDr			       LEA DX, OPERATOR_BUFF
+1   129	0053  B4 09			       MOV AH, 09H
+1   130	0055  CD 21			       INT 21H
+    131				     ;------------------END OF PRINTING	CODE----------------
+    132	0057			     DONE:
+    133					       PRINT_STRING NEWLINE
+1   134	0057  BA 003Fr			       LEA DX, NEWLINE
+1   135	005A  B4 09			       MOV AH, 09H
+1   136	005C  CD 21			       INT 21H
+    137					       PRINT_STRING AGAIN  ;display prompt message
+1   138	005E  BA 00B0r			       LEA DX, AGAIN
+1   139	0061  B4 09			       MOV AH, 09H
+1   140	0063  CD 21			       INT 21H
+    141					       READ_IN_STRING AGAIN2 ;
+1   142	0065  BA 0016r			       LEA DX, AGAIN2
+1   143	0068  B4 0A			       MOV AH, 0AH
+1   144	006A  CD 21			       INT 21H
+    145				     ;------------------ASK FOR	REPEAT-----------------------
+    146	006C  BE 0018r			       LEA SI, AGAIN2_BUF
+    147	006F  8A 04			       MOV AL, [SI]
+    148	0071  3C 59			       CMP AL, 59H
+    149	0073  74 A2			       JE START
+    150	0075  3C 79			       CMP AL, 79H
+    151	0077  74 9E			       JE START
+    152
+    153					.EXIT
+1   154	0079  B4 4C			     MOV     AH,4Ch
+1   155	007B  CD 21			     INT     21h
+    156	007D			     MAIN ENDP
+    157
+    158	007D			     INPUT PROC	NEAR ;START OF INPUT FUNCTION
+    159				     ;---------------SET EVERY THING BACK TO ITS INITIAL VALUE-------------
+    160					       RESET_OP	OP1_BUFF
+1   161	007D  B0 24			       MOV AL, 24H
+1   162	007F  BF 00B9r			       LEA DI, OP1_BUFF
+1   163	0082  B9 000A			       MOV CX, 10
+1   164	0085  FC			       CLD
+1   165	0086  F3> AA			       REP STOSB
+    166					       RESET_OP	OP2_BUFF
+1   167	0088  B0 24			       MOV AL, 24H
+1   168	008A  BF 00C3r			       LEA DI, OP2_BUFF
+1   169	008D  B9 000A			       MOV CX, 10
+1   170	0090  FC			       CLD
+1   171	0091  F3> AA			       REP STOSB
+Turbo Assembler	 Version 4.1	    10/12/16 00:29:47	    Page 4
+lab4.asm
+
+
+
+    172					       RESET_OP	OPERATOR_BUFF
+1   173	0093  B0 24			       MOV AL, 24H
+1   174	0095  BF 00CDr			       LEA DI, OPERATOR_BUFF
+1   175	0098  B9 000A			       MOV CX, 10
+1   176	009B  FC			       CLD
+1   177	009C  F3> AA			       REP STOSB
+    178	009E  BF 00E7r			       LEA DI, SET_FALSE
+    179	00A1  C6 05 00			       MOV BYTE	PTR [DI], 0H
+    180				     ;----------------PROMT USER INPUT--------------------------
+    181					       PRINT_STRING MSG	      ;display prompt message
+1   182	00A4  BA 001Ar			       LEA DX, MSG
+1   183	00A7  B4 09			       MOV AH, 09H
+1   184	00A9  CD 21			       INT 21H
+    185					       READ_IN_STRING Buffer  ;inut string
+1   186	00AB  BA 0000r			       LEA DX, Buffer
+1   187	00AE  B4 0A			       MOV AH, 0AH
+1   188	00B0  CD 21			       INT 21H
+    189				     ;-----------------PARSING START----------------------------
+    190	00B2  BE 0002r			       LEA SI, ACT_BUF
+    191	00B5  BF 00B9r			       LEA DI, OP1_BUFF
+    192				     ;----------------PARSING OPERAND1--------------------------
+    193	00B8				       FIRST_OP:
+    194	00B8  FC			       CLD
+    195	00B9  AC			       LODSB	 ;LOAD DATA CONTENT FROM ACT_BUF , SI+1
+    196	00BA  AA			       STOSB	 ;STORE	DATA CONTENT FROM AL TO	OP1, DI+1
+    197	00BB  80 3C 20			       CMP byte	ptr [SI], 20H
+    198	00BE  74 07			       JE NEXT_OPR
+    199	00C0  80 3C 24			       CMP byte	ptr [SI], 24H ;CMP IF IT IS THE	END OF THE ACT_BUFF
+    200	00C3  74 21			       JE ERROR_LABEL1	 ;IF YES, THEN WE KNOW STRING DOES NOT HAVE SPACE
+    201	00C5  EB F1			       JMP FIRST_OP
+    202				     ;------------------PARSING	OPERATOR-----------------------
+    203	00C7				       NEXT_OPR:
+    204	00C7  BF 00CDr				LEA DI,	OPERATOR_BUFF
+    205	00CA  46				INC SI
+    206	00CB  8A 04				MOV AL,	[SI]
+    207	00CD  88 05				MOV [DI], AL
+    208	00CF  46				INC SI
+    209	00D0  80 3C 20				CMP byte ptr [SI], 20H
+    210	00D3  74 03				JE NEXT_OP
+    211	00D5  EB 2A 90				JMP ERROR_LABEL2  ;SAME	WITH THIS ONE, WE KNOW IT DOES NOT HAVE	SPACE
+    212				     ;-----------------PARSING OPERAND2-----------------------
+    213	00D8					NEXT_OP:
+    214	00D8  BF 00C3r				LEA DI,	OP2_BUFF
+    215	00DB  46				INC SI
+    216	00DC					LOOP1:
+    217	00DC  FC				CLD
+    218	00DD  AC				LODSB	  ;LOAD	DATA CONTENT FROM ACT_BUF , SI+1
+    219	00DE  80 3C 24				CMP byte ptr [SI], 24H
+    220	00E1  74 06				JE COMPARE_OP1
+    221	00E3  AA				STOSB
+    222	00E4  EB F6				JMP LOOP1
+    223	00E6					ERROR_LABEL1:
+    224	00E6  EB 19 90				JMP ERROR_LABEL2
+    225				     ;----------------CHECK VALIDITY OPERAND1------------------
+    226	00E9					COMPARE_OP1:
+    227	00E9  BE 00B9r				LEA SI,	OP1_BUFF
+    228	00EC					LOOP2:
+Turbo Assembler	 Version 4.1	    10/12/16 00:29:47	    Page 5
+lab4.asm
+
+
+
+    229	00EC  46				INC SI
+    230	00ED  80 7C FF 24			CMP byte ptr [SI-1], 24H
+    231	00F1  74 11				JE COMPARE_OPR
+    232	00F3  80 7C FF 30			CMP byte ptr [SI-1], 30H
+    233	00F7  72 42				JB ERROR_LABEL
+    234	00F9  80 7C FF 39			CMP byte ptr [SI-1], 39H
+    235	00FD  77 3C				JA ERROR_LABEL
+    236	00FF  EB EB				JMP LOOP2
+    237	0101					ERROR_LABEL2:
+    238	0101  EB 38 90				JMP ERROR_LABEL
+    239				     ;---------------CHECK VALIDITY OPERATOR---------------------
+    240	0104				       COMPARE_OPR:
+    241	0104  BE 00CDr				LEA SI,	OPERATOR_BUFF
+    242	0107  80 3C 2B				CMP byte ptr [SI], 2BH
+    243	010A  74 17				JE COMPARE_OP2
+    244	010C  80 3C 2D				CMP byte ptr [SI], 2DH
+    245	010F  74 12				JE COMPARE_OP2
+    246	0111  80 3C 2A				CMP byte ptr [SI], 2AH
+    247	0114  74 0D				JE COMPARE_OP2
+    248	0116  80 3C 2F				CMP byte ptr [SI], 2FH
+    249	0119  74 08				JE COMPARE_OP2
+    250	011B  80 3C 25				CMP byte ptr [SI], 25H
+    251	011E  74 03				JE COMPARE_OP2
+    252	0120  EB 19 90				JMP ERROR_LABEL
+    253				     ;--------------CHECK VALIDITY OPERAND2------------------------
+    254	0123					COMPARE_OP2:
+    255	0123  BE 00C3r				LEA SI,	OP2_BUFF
+    256	0126					LOOP3:
+    257	0126  46				INC SI
+    258	0127  80 7C FF 24			CMP byte ptr [SI-1], 24H
+    259	012B  74 18				JE  RETURN
+    260	012D  80 7C FF 30			CMP byte ptr [SI-1], 30H
+    261	0131  72 08				JB  ERROR_LABEL
+    262	0133  80 7C FF 39			CMP byte ptr [SI-1], 39H
+    263	0137  77 02				JA  ERROR_LABEL
+    264	0139  EB EB				JMP LOOP3
+    265
+    266	013B			     ERROR_LABEL:
+    267						 PRINT_STRING NEWLINE
+1   268	013B  BA 003Fr			       LEA DX, NEWLINE
+1   269	013E  B4 09			       MOV AH, 09H
+1   270	0140  CD 21			       INT 21H
+    271	0142  E8 0001				 CALL ERROR_PROC
+    272	0145			     RETURN:
+    273	0145  C3		     RET
+    274	0146			     INPUT ENDP	;END OF	INPUT FUNCTION
+    275	0146			     ERROR_PROC	PROC NEAR
+    276						 PRINT_STRING MSG_ERROR
+1   277	0146  BA 0042r			       LEA DX, MSG_ERROR
+1   278	0149  B4 09			       MOV AH, 09H
+1   279	014B  CD 21			       INT 21H
+    280	014D  BF 00E7r				 LEA DI, SET_FALSE
+    281	0150  C6 05 01				 MOV BYTE PTR [DI], 1H
+    282	0153  C3		     RET
+    283	0154			     ERROR_PROC	ENDP ;END OF ERROR_POC FUNCTION
+    284				     END
+Turbo Assembler	 Version 4.1	    10/12/16 00:29:47	    Page 6
+Symbol Table
+
+
+
+
+Symbol Name			  Type	 Value
+
+??DATE				  Text	 "10/12/16"
+??FILENAME			  Text	 "lab4	  "
+??TIME				  Text	 "00:29:47"
+??VERSION			  Number 040A
+@32BIT				  Text	 0
+@CODE				  Text	 LAB4_TEXT
+@CODESIZE			  Text	 1
+@CPU				  Text	 0101H
+@CURSEG				  Text	 LAB4_TEXT
+@DATA				  Text	 DGROUP
+@DATASIZE			  Text	 0
+@FILENAME			  Text	 LAB4
+@INTERFACE			  Text	 000H
+@MODEL				  Text	 4
+@STACK				  Text	 DGROUP
+@STARTUP			  Near	 LAB4_TEXT:0000
+@WORDSIZE			  Text	 2
+ACT_BUF				  Byte	 DGROUP:0002
+AGAIN				  Byte	 DGROUP:00B0
+AGAIN2				  Byte	 DGROUP:0016
+AGAIN2_BUF			  Byte	 DGROUP:0018
+BUFFER				  Byte	 DGROUP:0000
+COMPARE_OP1			  Near	 LAB4_TEXT:00E9
+COMPARE_OP2			  Near	 LAB4_TEXT:0123
+COMPARE_OPR			  Near	 LAB4_TEXT:0104
+DONE				  Near	 LAB4_TEXT:0057
+ERROR_LABEL			  Near	 LAB4_TEXT:013B
+ERROR_LABEL1			  Near	 LAB4_TEXT:00E6
+ERROR_LABEL2			  Near	 LAB4_TEXT:0101
+ERROR_PROC			  Near	 LAB4_TEXT:0146
+FIRST_OP			  Near	 LAB4_TEXT:00B8
+INPUT				  Near	 LAB4_TEXT:007D
+LOOP1				  Near	 LAB4_TEXT:00DC
+LOOP2				  Near	 LAB4_TEXT:00EC
+LOOP3				  Near	 LAB4_TEXT:0126
+MAIN				  Far	 LAB4_TEXT:0017
+MSG				  Byte	 DGROUP:001A
+MSG_ERROR			  Byte	 DGROUP:0042
+NEWLINE				  Byte	 DGROUP:003F
+NEXT_OP				  Near	 LAB4_TEXT:00D8
+NEXT_OPR			  Near	 LAB4_TEXT:00C7
+NUM				  Byte	 DGROUP:0001
+NUM2				  Byte	 DGROUP:0017
+OP1				  Byte	 DGROUP:00E3
+OP1_BUFF			  Byte	 DGROUP:00B9
+OP1_S				  Byte	 DGROUP:00E1
+OP2				  Byte	 DGROUP:00E4
+OP2_BUFF			  Byte	 DGROUP:00C3
+OP2_S				  Byte	 DGROUP:00E2
+OPERATOR			  Byte	 DGROUP:00E5
+OPERATOR_BUFF			  Byte	 DGROUP:00CD
+RESULT				  Byte	 DGROUP:00E6
+RESULT_BUFF			  Byte	 DGROUP:00D7
+RETURN				  Near	 LAB4_TEXT:0145
+Turbo Assembler	 Version 4.1	    10/12/16 00:29:47	    Page 7
+Symbol Table
+
+
+
+SET_FALSE			  Byte	 DGROUP:00E7
+START				  Near	 LAB4_TEXT:0017
+
+Macro Name
+
+PRINT_NEWLINE
+PRINT_STRING
+READ_IN_STRING
+RESET_OP
+
+Groups & Segments		  Bit Size Align  Combine Class
+
+DGROUP				  Group
+  STACK				  16  0400 Para	  Stack	  STACK
+  _DATA				  16  00E8 Word	  Public  DATA
+LAB4_TEXT			  16  0154 Word	  Public  CODE
+

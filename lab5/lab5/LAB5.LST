@@ -1,0 +1,411 @@
+Turbo Assembler	 Version 4.1	    11/08/16 14:25:48	    Page 1
+lab5.asm
+
+
+
+      1
+      2				     INCLUDE NUTS.DAT
+1     3				     ; Each entry contains TWO sets of field :
+1     4				     ; a. A pointer to the next	element. The data type is WORD.
+1     5				     ; b. Text field which contains description	of each	nuts,
+1     6				     ; which is	terminated by 2	spaces.	The data type is BYTE.
+1     7				     NUTS MACRO
+1     8				     LIST_ORG DW PIS
+1     9				     PIS DW HAZ
+1    10				     DB	'Pistachios : A	native of Syria	 '
+1    11				     HAZ DW PEC
+1    12				     DB	'Hazels	: A native of Europe and south west Asia  '
+1    13				     PEC DW MAC
+1    14				     DB	'Pecans	: A native of North America  '
+1    15				     MAC DW PEA
+1    16				     DB	'Macadamia Nuts	: A native of North East Australia  '
+1    17				     PEA DW CAS
+1    18				     DB	'Peanuts : A native of South America  '
+1    19				     CAS DW PIN
+1    20				     DB	'Cashews : A native of South and Central America  '
+1    21				     PIN DW ALM
+1    22				     DB	'Pine Nuts : A native of the eastern Mediterranean region  '
+1    23				     ALM DW 0
+1    24				     DB	'Almonds : A native of the eastern Mediterranean region	 '
+1    25				     ENDM
+     26				     INCLUDE DOS.MAC
+1    27				     OUTC MACRO	CHAR
+1    28					     PUSH AX
+1    29					     PUSH DX
+1    30					     MOV DL, [CHAR]
+1    31					     MOV AH, 02H
+1    32					     INT 21H
+1    33					     POP DX
+1    34					     POP AX
+1    35				     ENDM
+1    36				     OUTSTRING MACRO MSG
+1    37					     PUSH AX
+1    38					     PUSH DX
+1    39					     MOV DX, OFFSET MSG
+1    40					     MOV AH, 09H
+1    41					     INT 21H
+1    42					     POP DX
+1    43					     POP AX
+1    44				     ENDM
+1    45
+1    46
+     47	0000			     .MODEL MEDIUM
+     48
+     49	0000			     .STACK 100H
+     50
+     51	0000			     .DATA
+     52					    NUTS
+1    53	0000  0002r		     LIST_ORG DW PIS
+1    54	0002  0024r		     PIS DW HAZ
+1    55	0004  50 69 73 74 61 63	68+  DB	'Pistachios : A	native of Syria	 '
+     56	      69 6F 73 20 3A 20	41+
+     57	      20 6E 61 74 69 76	65+
+Turbo Assembler	 Version 4.1	    11/08/16 14:25:48	    Page 2
+lab5.asm
+
+
+
+     58	      20 6F 66 20 53 79	72+
+     59	      69 61 20 20
+1    60	0024  0057r		     HAZ DW PEC
+1    61	0026  48 61 7A 65 6C 73	20+  DB	'Hazels	: A native of Europe and south west Asia  '
+     62	      3A 20 41 20 6E 61	74+
+     63	      69 76 65 20 6F 66	20+
+     64	      45 75 72 6F 70 65	20+
+     65	      61 6E 64 20 73 6F	75+
+     66	      74 68 20 77 65 73	74+
+     67	      20 41 73 69 61 20	20
+1    68	0057  007Dr		     PEC DW MAC
+1    69	0059  50 65 63 61 6E 73	20+  DB	'Pecans	: A native of North America  '
+     70	      3A 20 41 20 6E 61	74+
+     71	      69 76 65 20 6F 66	20+
+     72	      4E 6F 72 74 68 20	41+
+     73	      6D 65 72 69 63 61	20+
+     74	      20
+1    75	007D  00B2r		     MAC DW PEA
+1    76	007F  4D 61 63 61 64 61	6D+  DB	'Macadamia Nuts	: A native of North East Australia  '
+     77	      69 61 20 4E 75 74	73+
+     78	      20 3A 20 41 20 6E	61+
+     79	      74 69 76 65 20 6F	66+
+     80	      20 4E 6F 72 74 68	20+
+     81	      45 61 73 74 20 41	75+
+     82	      73 74 72 61 6C 69	61+
+     83	      20 20
+1    84	00B2  00D9r		     PEA DW CAS
+1    85	00B4  50 65 61 6E 75 74	73+  DB	'Peanuts : A native of South America  '
+     86	      20 3A 20 41 20 6E	61+
+     87	      74 69 76 65 20 6F	66+
+     88	      20 53 6F 75 74 68	20+
+     89	      41 6D 65 72 69 63	61+
+     90	      20 20
+1    91	00D9  010Cr		     CAS DW PIN
+1    92	00DB  43 61 73 68 65 77	73+  DB	'Cashews : A native of South and Central America  '
+     93	      20 3A 20 41 20 6E	61+
+     94	      74 69 76 65 20 6F	66+
+     95	      20 53 6F 75 74 68	20+
+     96	      61 6E 64 20 43 65	6E+
+     97	      74 72 61 6C 20 41	6D+
+     98	      65 72 69 63 61 20	20
+1    99	010C  0148r		     PIN DW ALM
+1   100	010E  50 69 6E 65 20 4E	75+  DB	'Pine Nuts : A native of the eastern Mediterranean region  '
+    101	      74 73 20 3A 20 41	20+
+    102	      6E 61 74 69 76 65	20+
+    103	      6F 66 20 74 68 65	20+
+    104	      65 61 73 74 65 72	6E+
+    105	      20 4D 65 64 69 74	65+
+    106	      72 72 61 6E 65 61	6E+
+    107	      20 72 65 67 69 6F	6E+
+    108	      20 20
+1   109	0148  0000		     ALM DW 0
+1   110	014A  41 6C 6D 6F 6E 64	73+  DB	'Almonds : A native of the eastern Mediterranean region	 '
+    111	      20 3A 20 41 20 6E	61+
+    112	      74 69 76 65 20 6F	66+
+    113	      20 74 68 65 20 65	61+
+    114	      73 74 65 72 6E 20	4D+
+Turbo Assembler	 Version 4.1	    11/08/16 14:25:48	    Page 3
+lab5.asm
+
+
+
+    115	      65 64 69 74 65 72	72+
+    116	      61 6E 65 61 6E 20	72+
+    117	      65 67 69 6F 6E 20	20
+    118	0182  0D 0A 24			    NEWLINE  DB	0DH,0AH,'$'
+    119	0185  00			    SWAP_FLAG DB 0H	 ; DEFAULT TO  FALSE
+    120	0186  0000			    START_PTR DW  00H
+    121	0188  0000			    PREV_PTR  DW  00H
+    122	018A  0000			    CURRENT_PTR	 Dw  00H
+    123	018C  0000			    NEXT_PTR  Dw  00H
+    124
+    125	018E			     .CODE
+    126					    .STARTUP
+1   127	0000			     @Startup:
+1   128	0000  BA 0000s			     MOV     DX,@data
+1   129	0003  8E DA			     MOV     DS,DX
+1   130	0005  8C D3			     MOV     BX,SS
+1   131	0007  2B DA			     SUB     BX,DX
+1   132	0009  D1 E3 D1 E3 D1 E3	D1+	     SHL     BX,4
+    133	      E3
+1   134	0011  FA			     CLI
+1   135	0012  8E D2			     MOV     SS,DX
+1   136	0014  03 E3			     ADD     SP,BX
+1   137	0016  FB			     STI
+    138
+    139	0017			     MAIN PROC FAR
+    140
+    141	0017  B8 0000s				 MOV	AX,@DATA
+    142	001A  8E D8				 MOV	DS,AX
+    143	001C  8E C0				 MOV	ES,AX
+    144	001E  E8 00AC				 CALL	DISPLIST   ; add your own display proceadure
+    145	0021  E8 0012				 CALL  BUBBLE
+    146						 OUTSTRING NEWLINE
+1   147	0024  50			     PUSH AX
+1   148	0025  52			     PUSH DX
+1   149	0026  BA 0182r			     MOV DX, OFFSET NEWLINE
+1   150	0029  B4 09			     MOV AH, 09H
+1   151	002B  CD 21			     INT 21H
+1   152	002D  5A			     POP DX
+1   153	002E  58			     POP AX
+    154	002F  E8 009B				 CALL	DISPLIST
+    155
+    156				     .EXIT
+1   157	0032  B4 4C			     MOV     AH,4Ch
+1   158	0034  CD 21			     INT     21h
+    159	0036			     MAIN ENDP
+    160
+    161	0036			     BUBBLE PROC NEAR
+    162						 ;Prepare Pointers or nodes adresses
+    163						 ; Start: start	of the list, Previous Pointer (Node) , Current Pointer (Node), Next +
+    164				     Pointer (Node)
+    165	0036  BE 0000r		     START:	   MOV SI,OFFSET LIST_ORG    ; SI= 0000	= START_PTR
+    166	0039  89 36 0188r			   MOV PREV_PTR,SI	     ; PREV_PTR= START_PTR
+    167	003D  8B 3C				   MOV DI,[SI]		     ; DI=[SI]=	[LIST_ORG]= [0000H]= 0002H = ADDRESS OF	    +
+    168				     CURRENT_PTR
+    169	003F  89 3E 018Ar			   MOV CURRENT_PTR,DI	     ; SET CURRENT_PTR=	0002H
+    170	0043  8B 05				   MOV AX,[DI]
+    171	0045  A3 018Cr				   MOV NEXT_PTR,AX	     ; SET NEXT_PTR = [0002] = 0024H FOR THIS EXAMPLE
+Turbo Assembler	 Version 4.1	    11/08/16 14:25:48	    Page 4
+lab5.asm
+
+
+
+    172									     ; EQUIVALENT TO CURRENT->NEXT
+    173
+    174						 ; SET THE SWAP	 FLAG TO FALSE
+    175	0048  B0 00				   MOV AL,0
+    176	004A  A2 0185r				   MOV SWAP_FLAG, AL
+    177
+    178						 ; NOW WE CAN LOAD THE FIRST ELEMENTS IN  EACH ARRAY
+    179						 ; COMPARE CURRENT-> DATA &  CURRENT-> NEXT-> DATA ( OR	NEXT_PTR-> DATA)
+    180
+    181	004D  8B 36 018Ar	     NEXTCHAR:	   MOV SI, CURRENT_PTR
+    182	0051  83 C6 02				   ADD SI,2		  ; TO	FETCH FIRST  CHARACHTER
+    183	0054  8B 3E 018Cr			   MOV DI, NEXT_PTR
+    184	0058  83 C7 02				   ADD DI,2
+    185	005B  FC				   CLD
+    186	005C  B9 0064				   MOV CX,100  ; TO  ENSURE YOU	SCAN THE WHOLE STRING /DATA
+    187	005F  F3> A6				   REPE	CMPSB
+    188	0061  77 03				   JA	TOSWAP	; IF SWAP OCCURS THEN WE NEED TO
+    189								; 1. SWAP THE POINTERS
+    190								; 2. UPDATE THE	CURRENT, NEXT, PREV POINTERS
+    191								; 3. SET  SWAP_FLAG= 1 (TRUE)
+    192								; 4. KEEP  GOING
+    193
+    194	0063  EB 39 90				   JMP NOSWAP	; IN THIS CASE WE ONLY	UPDATE THE POINTERS TO MOVE TO	NEXT	    +
+    195				     ELEMENTS
+    196
+    197	0066			     TOSWAP:	     ; 1. SWAP THE POINTERS
+    198						     ; BEFORE: PREV_PTR	---> CURRENT_PTR ---> NEXT_PTR---> (NEXT_PTR->NETX )
+    199	0066  8B 1E 0188r			     MOV BX,PREV_PTR
+    200	006A  8B 36 018Ar			     MOV SI,CURRENT_PTR
+    201	006E  8B 3E 018Cr			     MOV DI,NEXT_PTR
+    202
+    203
+    204						     ; AFTER : PREV_PTR--> NEXT_PTR--> CURRENT_PTR--> (NEXT_PTR->NEXT)
+    205	0072  89 3F				     MOV [BX],DI   ;  PREV_PTR--> NEXT_PTR  OR [PREV_PTR] = NEXT_PTR
+    206	0074  8B 05				     MOV AX,[DI]
+    207	0076  89 04				     MOV [SI],AX   ; CURRENT_PTR--> (NEXT_PTR->NEXT) OR	CURRENT_PTR points to the   +
+    208				     next  element
+    209	0078  89 35				     MOV [DI],SI   ; NEXT_PTR--> CURRENT_PTR ; update the NEXT_PTR TO POINT TO	    +
+    210				     CURRENT
+    211
+    212						     ; 2. UPDATE THE CURRENT, NEXT, PREV POINTERS
+    213
+    214	007A  8B 1E 0188r			      MOV BX,PREV_PTR	;
+    215	007E  8B 07				      MOV AX,[BX]
+    216	0080  A3 0188r				      MOV PREV_PTR,AX	; THE SWAPPED ELEMENT TO THE LEFT BECOMES THE PREV_PTR
+    217	0083  8B 1E 018Ar			      MOV BX,CURRENT_PTR ;THE SWAPPED ELEMENT TO THE RIGHT BECOMES THE CURRENT_PTR
+    218	0087  8B 07				      MOV AX,[BX]
+    219	0089  A3 018Cr				      MOV NEXT_PTR,AX	 ;THE NEXT ELEMENT  BECOMES THE	NEXT_PTR
+    220
+    221						      ;3. SET  SWAP_FLAG= 1 (TRUE)
+    222	008C  50				      PUSH AX
+    223	008D  B0 01				      MOV AL, 1
+    224	008F  A2 0185r				      MOV SWAP_FLAG,AL
+    225	0092  58				      POP AX
+    226						      ;	4. KEEP	GOING.....
+    227						      ;	 CHECK IF WE REACH THE END OF THE LIST
+    228	0093  8B 1E 018Ar			      MOV BX, CURRENT_PTR
+Turbo Assembler	 Version 4.1	    11/08/16 14:25:48	    Page 5
+lab5.asm
+
+
+
+    229	0097  83 3F 00				      CMP WORD PTR [BX],0
+    230	009A  74 26				      JE END_LOOP	     ;If zero exit bubble sort
+    231	009C  EB AF				      JMP  NEXTCHAR
+    232
+    233	009E			     NOSWAP:	      ;	to  do
+    234	009E  8B 36 0188r			      MOV SI, PREV_PTR
+    235	00A2  8B 04				      MOV AX, [SI]
+    236	00A4  A3 0188r				      MOV PREV_PTR, AX
+    237
+    238	00A7  8B 36 018Ar			      MOV SI, CURRENT_PTR
+    239	00AB  8B 04				      MOV AX, [SI]
+    240	00AD  A3 018Ar				      MOV CURRENT_PTR, AX
+    241
+    242	00B0  8B 36 018Cr			      MOV SI, NEXT_PTR
+    243	00B4  8B 04				      MOV AX, [SI]
+    244	00B6  A3 018Cr				      MOV NEXT_PTR, AX
+    245
+    246	00B9  83 3E 018Cr 00			      CMP NEXT_PTR, 0
+    247	00BE  74 02				      JE END_LOOP
+    248	00C0  EB 8B				      JMP NEXTCHAR
+    249
+    250						      ;SHIFT POINTERS TO  TEH RIGHT TO CMPARE NEW ADJACENT ELEMENTS
+    251							     ; 1. NEW PREV_PTR =  [PREV_PTR]
+    252							     ; 2. NEW CURRENT_PTR =  [CURRENT_PTR]
+    253						      ;	3. NEW NEXT_PTR	=  [NEXT_PTR
+    254						      ;	4. CHECK IF WE REACH THE END OF	THE LIST
+    255						      ;	5. If (4) is YES then jmp to END_LOOP
+    256
+    257
+    258	00C2  A0 0185r		     END_LOOP:	      MOV AL, SWAP_FLAG	    ; check swap_flag
+    259	00C5  3C 00				      CMP AL, 0H
+    260	00C7  74 03				      JE  EXITBUBBLE
+    261	00C9  E9 FF6A				      JMP START
+    262	00CC			     EXITBUBBLE:
+    263	00CC  C3				       RET
+    264	00CD			     BUBBLE ENDP
+    265
+    266
+    267	00CD			     DISPLIST PROC NEAR
+    268	00CD  BE 0000r				     MOV SI,OFFSET LIST_ORG    ; SI= 0000 = START_PTR
+    269	00D0  8B 04				     MOV AX, [SI]
+    270	00D2  A3 018Ar		     START1:	     MOV CURRENT_PTR, AX
+    271	00D5  8B 36 018Ar			     MOV SI, CURRENT_PTR
+    272	00D9  8B 1C				     MOV BX, [SI]
+    273	00DB  89 1E 018Cr			     MOV NEXT_PTR,BX
+    274	00DF  83 C6 02				     ADD SI, 2
+    275	00E2  33 DB				     XOR BX, BX
+    276	00E4			     KEEP_PRINTING:  OUTC SI
+1   277	00E4  50			     PUSH AX
+1   278	00E5  52			     PUSH DX
+1   279	00E6  8A 14			     MOV DL, [SI]
+1   280	00E8  B4 02			     MOV AH, 02H
+1   281	00EA  CD 21			     INT 21H
+1   282	00EC  5A			     POP DX
+1   283	00ED  58			     POP AX
+    284	00EE  46				     INC SI
+    285	00EF  80 3C 20				     CMP BYTE PTR[SI],20H
+Turbo Assembler	 Version 4.1	    11/08/16 14:25:48	    Page 6
+lab5.asm
+
+
+
+    286	00F2  74 02				     JE	CHECK_SPACE
+    287	00F4  EB EE				     JMP KEEP_PRINTING
+    288	00F6  80 7C 01 20	     CHECK_SPACE:    CMP BYTE PTR[SI+1],20H
+    289	00FA  74 02				     JE	NEXT_NODE
+    290	00FC  EB E6				     JMP KEEP_PRINTING
+    291	00FE  8B 36 018Cr	     NEXT_NODE:	     MOV SI, NEXT_PTR
+    292						     OUTSTRING NEWLINE
+1   293	0102  50			     PUSH AX
+1   294	0103  52			     PUSH DX
+1   295	0104  BA 0182r			     MOV DX, OFFSET NEWLINE
+1   296	0107  B4 09			     MOV AH, 09H
+1   297	0109  CD 21			     INT 21H
+1   298	010B  5A			     POP DX
+1   299	010C  58			     POP AX
+    300	010D  83 FE 00				     CMP SI, 0H
+    301	0110  74 04				     JE	DONE
+    302	0112  8B C6				     MOV AX, SI
+    303	0114  EB BC				     JMP START1
+    304
+    305	0116			     DONE:
+    306	0116  C3		     RET
+    307	0117			     DISPLIST ENDP
+    308				     END
+Turbo Assembler	 Version 4.1	    11/08/16 14:25:48	    Page 7
+Symbol Table
+
+
+
+
+Symbol Name			  Type	 Value
+
+??DATE				  Text	 "11/08/16"
+??FILENAME			  Text	 "lab5	  "
+??TIME				  Text	 "14:25:48"
+??VERSION			  Number 040A
+@32BIT				  Text	 0
+@CODE				  Text	 LAB5_TEXT
+@CODESIZE			  Text	 1
+@CPU				  Text	 0101H
+@CURSEG				  Text	 LAB5_TEXT
+@DATA				  Text	 DGROUP
+@DATASIZE			  Text	 0
+@FILENAME			  Text	 LAB5
+@INTERFACE			  Text	 000H
+@MODEL				  Text	 4
+@STACK				  Text	 DGROUP
+@STARTUP			  Near	 LAB5_TEXT:0000
+@WORDSIZE			  Text	 2
+ALM				  Word	 DGROUP:0148
+BUBBLE				  Near	 LAB5_TEXT:0036
+CAS				  Word	 DGROUP:00D9
+CHECK_SPACE			  Near	 LAB5_TEXT:00F6
+CURRENT_PTR			  Word	 DGROUP:018A
+DISPLIST			  Near	 LAB5_TEXT:00CD
+DONE				  Near	 LAB5_TEXT:0116
+END_LOOP			  Near	 LAB5_TEXT:00C2
+EXITBUBBLE			  Near	 LAB5_TEXT:00CC
+HAZ				  Word	 DGROUP:0024
+KEEP_PRINTING			  Near	 LAB5_TEXT:00E4
+LIST_ORG			  Word	 DGROUP:0000
+MAC				  Word	 DGROUP:007D
+MAIN				  Far	 LAB5_TEXT:0017
+NEWLINE				  Byte	 DGROUP:0182
+NEXTCHAR			  Near	 LAB5_TEXT:004D
+NEXT_NODE			  Near	 LAB5_TEXT:00FE
+NEXT_PTR			  Word	 DGROUP:018C
+NOSWAP				  Near	 LAB5_TEXT:009E
+PEA				  Word	 DGROUP:00B2
+PEC				  Word	 DGROUP:0057
+PIN				  Word	 DGROUP:010C
+PIS				  Word	 DGROUP:0002
+PREV_PTR			  Word	 DGROUP:0188
+START				  Near	 LAB5_TEXT:0036
+START1				  Near	 LAB5_TEXT:00D2
+START_PTR			  Word	 DGROUP:0186
+SWAP_FLAG			  Byte	 DGROUP:0185
+TOSWAP				  Near	 LAB5_TEXT:0066
+
+Macro Name
+
+NUTS
+OUTC
+OUTSTRING
+Turbo Assembler	 Version 4.1	    11/08/16 14:25:48	    Page 8
+Symbol Table
+
+
+
+
+Groups & Segments		  Bit Size Align  Combine Class
+
+DGROUP				  Group
+  STACK				  16  0100 Para	  Stack	  STACK
+  _DATA				  16  018E Word	  Public  DATA
+LAB5_TEXT			  16  0117 Word	  Public  CODE
+

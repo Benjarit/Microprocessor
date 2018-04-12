@@ -1,0 +1,383 @@
+Turbo Assembler	 Version 4.1	    11/29/16 14:41:46	    Page 1
+lab7.asm
+
+
+
+      1
+      2					 ;CGA text mode
+      3					 ; mode	03h
+      4					 ;(a)Change the	video mode
+      5					 ;(b)Display the letter	'F' IN high ontensity white on blue
+      6
+      7					 INCLUDE DOS.MAC
+1     8					 ;------------------------------------------------------
+1     9					 CLEAR_SCREEN  macro
+1    10					 ;
+1    11					 ; Clears the screen (video page 0) and	locates	the
+1    12					 ; cursor at row 0, column 0.
+1    13					 ; Receives: nothing
+1    14					 ; Returns: nothing
+1    15					 ;-------------------------------------------------------
+1    16					       PUSHA
+1    17					       MOV AX,0600H ; SCROLL ENTIRE WINDOW UP
+1    18					       MOV CX,0	    ; UPPER LEFT CORNER	(0,0), CL=0, CH=0
+1    19					       MOV DX,184FH ; LOWER RIGHT CORNER (24,79)
+1    20					       MOV BH,7	    ; NORMAL ATTRIBUTE bh=7   ,	Back=  Black, and Foreground= Green  BH=2  ,+
+     21					 1eh
+1    22					       INT 10H	    ; CALL BIOS
+1    23					       POPA
+1    24
+1    25					 ENDM
+1    26
+1    27					 ;--------------------------------------------------
+1    28					 AdvanceCursor MACRO
+1    29					 ;
+1    30					 ; Advances the	cursor n columns to the	right.
+1    31					 ; (Cursor does	not wrap around	to the next line.)
+1    32					 ; Receives: CX	= number of columns
+1    33					 ; Returns: nothing
+1    34					 ;--------------------------------------------------
+1    35					     PUSHA
+1    36					 L1: PUSH CX ; SAVE LOOP COUNTER
+1    37					     MOV AH,3 ;	GET CURSOR POSITION
+1    38					     MOV BH,0 ;	INTO DH, DL
+1    39					     INT 10H ; CHANGES CX REGISTER!
+1    40					     INC DL ; INCREMENT	COLUMN
+1    41					     MOV AH,2 ;	SET CURSOR POSITION
+1    42					     INT 10H
+1    43					     POP CX ; RESTORE LOOP COUNTER
+1    44					     LOOP L1 ; NEXT COLUMN
+1    45					     POPA
+1    46					 ENDM
+1    47
+1    48
+1    49					 ;------------------------------------------------------
+1    50					 WRITE_CHAR  MACRO  CHAR,ATTRIBUTE,COUNT
+1    51					 ;
+1    52					 ; writes a character in color at the current cursor position.
+1    53					 ;
+1    54					 ; Receives: AH	= 9
+1    55					 ;	     AL	= ASCII	code of	character
+1    56					 ;	     BH	= video	page
+1    57					 ;	     BL	= attribute
+Turbo Assembler	 Version 4.1	    11/29/16 14:41:46	    Page 2
+lab7.asm
+
+
+
+1    58					 ;	     CX	= repetition count
+1    59					 ; Returns: nothing
+1    60					 ;The following	are some possible variations of	the attributes:
+1    61					 ; Binary	 Hex	  Result
+1    62					 ; 0000	000000 white on	white (no display)
+1    63					 ; 0000	0111 07	white on black normal
+1    64					 ; 0000	1111 0F	white on black highlight
+1    65					 ; 1000	0111 87	white on black blinking
+1    66					 ; 0111	0111 77	black on black (no display)
+1    67					 ; 0111	0000 70	black on white
+1    68					 ; 1111	0000 F0	black on white blinking
+1    69					 ;-------------------------------------------------------
+1    70					       PUSHA
+1    71					       MOV AH, 09 ;display option ; write character and	attribute at cursor position.
+1    72					       MOV BH,00 ;page 0
+1    73					       MOV AL, CHAR ;the ASCII	letter
+1    74					       MOV CX, COUNT ;repeat it	COUNT times
+1    75					       MOV BL, ATTRIBUTE ;attribute
+1    76					       INT 10H
+1    77					       POPA
+1    78					 ENDM
+1    79
+1    80					 ;---------------------------------------------------
+1    81					 SET_CURSOR MACRO COL, ROW
+1    82					 ;
+1    83					 ; Sets	the cursor position on video page 0.
+1    84					 ; Receives: DH,DL = row, column
+1    85					 ; Returns: nothing
+1    86					 ;---------------------------------------------------
+1    87					     PUSHA
+1    88					     MOV AH,02	; SET CURSOR POSITION
+1    89					     MOV DL,col	 ;  COLUMNS
+1    90					     MOV DH,row	 ;  ROWS
+1    91					     MOV BH,0	; VIDEO	PAGE 0
+1    92					     INT 10H
+1    93					     POPA
+1    94					 ENDM
+1    95
+1    96
+1    97					 output	MACRO MSG
+1    98						 PUSH	 AX
+1    99						 PUSH	 DX
+1   100
+1   101						 MOV	 AH,09H
+1   102						 MOV	 DX,OFFSET MSG
+1   103						 INT	 21H
+1   104						 POP	 DX
+1   105						 POP	 AX
+1   106					 ENDM
+1   107
+1   108					 PRINTCH MACRO CHAR
+1   109						 PUSH  AX
+1   110						 PUSH  DX
+1   111						 MOV   DL,CHAR
+1   112						 MOV   AH,02H
+1   113						 INT   21H
+1   114						 POP   DX
+Turbo Assembler	 Version 4.1	    11/29/16 14:41:46	    Page 3
+lab7.asm
+
+
+
+1   115						 POP   AX
+1   116					 ENDM
+1   117
+1   118
+1   119					 OUTCH MACRO CHAR
+1   120					     mov ah,0eh
+1   121					     mov AL,CHAR
+1   122					     int 10h
+1   123					 ENDM
+1   124
+    125	    0000			 .model	small
+    126					 .386
+    127	    0000			 .stack	100h
+    128	    0000			 .data
+    129
+    130	    0000  46			     SYMBOL  DB	   'F'	; ASCII	CHARCHTER 1H= FUNNY  FACE, 03H HEART...ETC
+    131	    0001  45 43	45 33 32 31 30+	     STRING  DB	   'ECE3210 LAB7$'
+    132		  20 4C	41 42 37 24
+    133	    000E  48 3A	20 48 6F 72 69+	     STRING2 DB	   "H: Horizontal bars	  V: Vertical bars    Q: Quit$"
+    134		  7A 6F	6E 74 61 6C 20+
+    135		  62 61	72 73 20 20 20+
+    136		  20 56	3A 20 56 65 72+
+    137		  74 69	63 61 6C 20 62+
+    138		  61 72	73 20 20 20 20+
+    139		  51 3A	20 51 75 69 74+
+    140		  24
+    141	    0040  50 72	65 73 73 20 42+	     STRING3 DB	   "Press B to go back to MENU$"
+    142		  20 74	6F 20 67 6F 20+
+    143		  62 61	63 6B 20 74 6F+
+    144		  20 4D	45 4E 55 24
+    145	    005B  ??			     CHOICE  DB	   ?
+    146	    005C  1F			     COLOR   DB	   1FH	  ; high intensity white on blue
+    147	    005D			 .code
+    148					 .startup
+1   149	    0000			 @Startup:
+1   150	    0000  BA 0000s			 MOV	 DX,@data
+1   151	    0003  8E DA				 MOV	 DS,DX
+1   152	    0005  8C D3				 MOV	 BX,SS
+1   153	    0007  2B DA				 SUB	 BX,DX
+1   154	    0009  C1 E3	04			 SHL	 BX,4
+1   155	    000C  8E D2				 MOV	 SS,DX
+1   156	    000E  03 E3				 ADD	 SP,BX
+    157
+    158	    0010			 main proc far
+    159	    0010  B8 0000s		   mov ax,@data
+    160	    0013  8E D8			   mov ds,ax
+    161	    0015  8E C0			   mov es, ax
+    162
+    163					 ;;;;;;	SET THE	VIDEO MODE;;;;;;;;;;;
+    164	    0017  B4 00				mov ah,00h
+    165	    0019  B0 03				mov al,03h    ;CGA color text mode of 80*25
+    166	    001B  CD 10				int  10h
+    167
+    168
+    169					 ; macros are defined in  DOS.AMC
+    170	    001D			 START:
+    171	    001D  B8 0600		     MOV AX, 0600H
+Turbo Assembler	 Version 4.1	    11/29/16 14:41:46	    Page 4
+lab7.asm
+
+
+
+    172	    0020  B1 00			     MOV CL, 0
+    173	    0022  B5 00			     MOV CH, 0
+    174	    0024  B2 50			     MOV DL, 80
+    175	    0026  B6 18			     MOV DH, 24
+    176	    0028  B7 17			     MOV BH, 17H
+    177	    002A  CD 10			     INT 10H
+    178
+    179					     SET_CURSOR	30,10
+1   180	    002C  60			     PUSHA
+1   181	    002D  B4 02			     MOV AH,02	; SET CURSOR POSITION
+1   182	    002F  B2 1E			     MOV DL,30	;  COLUMNS
+1   183	    0031  B6 0A			     MOV DH,10	;  ROWS
+1   184	    0033  B7 00			     MOV BH,0	; VIDEO	PAGE 0
+1   185	    0035  CD 10			     INT 10H
+1   186	    0037  61			     POPA
+    187	    0038  BA 0001r		     MOV DX, OFFSET STRING
+    188	    003B  B4 09			     MOV AH, 09H
+    189	    003D  CD 21			     INT 21H
+    190
+    191					     SET_CURSOR	20,15
+1   192	    003F  60			     PUSHA
+1   193	    0040  B4 02			     MOV AH,02	; SET CURSOR POSITION
+1   194	    0042  B2 14			     MOV DL,20	;  COLUMNS
+1   195	    0044  B6 0F			     MOV DH,15	;  ROWS
+1   196	    0046  B7 00			     MOV BH,0	; VIDEO	PAGE 0
+1   197	    0048  CD 10			     INT 10H
+1   198	    004A  61			     POPA
+    199	    004B  BA 000Er		     MOV DX, OFFSET STRING2
+    200	    004E  B4 09			     MOV AH, 09H
+    201	    0050  CD 21			     INT 21H
+    202
+    203	    0052  B4 01			     MOV AH, 01H
+    204	    0054  CD 21			     INT 21H
+    205	    0056  A2 005Br		     MOV CHOICE, AL
+    206	    0059  80 3E	005Br 48	     CMP CHOICE, "H"
+    207	    005E  74 0E	90 90		     JE	HORIZ
+    208	    0062  80 3E	005Br 56	     CMP CHOICE, 'V'
+    209	    0067  74 4F	90 90		     JE	VERTI
+    210	    006B  E9 0094		     JMP DONE
+    211
+    212	    006E			 HORIZ:
+    213	    006E  B8 0600		     MOV AX, 0600H
+    214	    0071  B1 00			     MOV CL, 0
+    215	    0073  B5 00			     MOV CH, 0
+    216	    0075  B2 1A			     MOV DL, 26
+    217	    0077  B6 18			     MOV DH, 24
+    218	    0079  B7 20			     MOV BH, 20H
+    219	    007B  CD 10			     INT 10H
+    220
+    221	    007D  B1 1B			     MOV CL, 27
+    222	    007F  B5 00			     MOV CH, 0
+    223	    0081  B2 34			     MOV DL, 52
+    224	    0083  B6 18			     MOV DH, 24
+    225	    0085  B7 40			     MOV BH, 40H
+    226	    0087  CD 10			     INT 10H
+    227
+    228	    0089  B1 35			     MOV CL, 53
+Turbo Assembler	 Version 4.1	    11/29/16 14:41:46	    Page 5
+lab7.asm
+
+
+
+    229	    008B  B5 00			     MOV CH, 0
+    230	    008D  B2 4F			     MOV DL, 79
+    231	    008F  B6 18			     MOV DH, 24
+    232	    0091  B7 10			     MOV BH, 10H
+    233	    0093  CD 10			     INT 10H
+    234
+    235					     SET_CURSOR	30,10
+1   236	    0095  60			     PUSHA
+1   237	    0096  B4 02			     MOV AH,02	; SET CURSOR POSITION
+1   238	    0098  B2 1E			     MOV DL,30	;  COLUMNS
+1   239	    009A  B6 0A			     MOV DH,10	;  ROWS
+1   240	    009C  B7 00			     MOV BH,0	; VIDEO	PAGE 0
+1   241	    009E  CD 10			     INT 10H
+1   242	    00A0  61			     POPA
+    243	    00A1  BA 0040r		     MOV DX, OFFSET STRING3
+    244	    00A4  B4 09			     MOV AH, 09H
+    245	    00A6  CD 21			     INT 21H
+    246
+    247	    00A8  B4 01			     MOV AH, 01H
+    248	    00AA  CD 21			     INT 21H
+    249	    00AC  A2 005Br		     MOV CHOICE, AL
+    250	    00AF  3C 42			     CMP AL, "B"
+    251	    00B1  0F 84	FF68		     JE	START
+    252	    00B5  EB 4B	90		     JMP DONE
+    253	    00B8			 VERTI:
+    254	    00B8  B8 0600		     MOV AX, 0600H
+    255	    00BB  B1 00			     MOV CL, 0
+    256	    00BD  B5 00			     MOV CH, 0
+    257	    00BF  B2 4F			     MOV DL, 79
+    258	    00C1  B6 08			     MOV DH, 8
+    259	    00C3  B7 20			     MOV BH, 20H
+    260	    00C5  CD 10			     INT 10H
+    261
+    262	    00C7  B1 00			     MOV CL, 0
+    263	    00C9  B5 09			     MOV CH, 9
+    264	    00CB  B2 4F			     MOV DL, 79
+    265	    00CD  B6 10			     MOV DH, 16
+    266	    00CF  B7 40			     MOV BH, 40H
+    267	    00D1  CD 10			     INT 10H
+    268
+    269	    00D3  B1 00			     MOV CL, 0
+    270	    00D5  B5 11			     MOV CH, 17
+    271	    00D7  B2 4F			     MOV DL, 79
+    272	    00D9  B6 18			     MOV DH, 24
+    273	    00DB  B7 10			     MOV BH, 10H
+    274	    00DD  CD 10			     INT 10H
+    275
+    276					     SET_CURSOR	30,10
+1   277	    00DF  60			     PUSHA
+1   278	    00E0  B4 02			     MOV AH,02	; SET CURSOR POSITION
+1   279	    00E2  B2 1E			     MOV DL,30	;  COLUMNS
+1   280	    00E4  B6 0A			     MOV DH,10	;  ROWS
+1   281	    00E6  B7 00			     MOV BH,0	; VIDEO	PAGE 0
+1   282	    00E8  CD 10			     INT 10H
+1   283	    00EA  61			     POPA
+    284	    00EB  BA 0040r		     MOV DX, OFFSET STRING3
+    285	    00EE  B4 09			     MOV AH, 09H
+Turbo Assembler	 Version 4.1	    11/29/16 14:41:46	    Page 6
+lab7.asm
+
+
+
+    286	    00F0  CD 21			     INT 21H
+    287
+    288	    00F2  B4 01			     MOV AH, 01H
+    289	    00F4  CD 21			     INT 21H
+    290	    00F6  A2 005Br		     MOV CHOICE, AL
+    291	    00F9  3C 42			     CMP AL, "B"
+    292	    00FB  0F 84	FF1E		     JE	START
+    293	    00FF  EB 01	90		     JMP DONE
+    294					 ;;;;;;;;END;;;;;;;;
+    295	    0102			 DONE:
+    296	    0102  B4 4C			   mov ah,4ch
+    297	    0104  CD 21			   int 21h
+    298	    0106			 main endp
+    299					 end
+Turbo Assembler	 Version 4.1	    11/29/16 14:41:46	    Page 7
+Symbol Table
+
+
+
+
+Symbol Name			  Type	 Value
+
+??DATE				  Text	 "11/29/16"
+??FILENAME			  Text	 "lab7	  "
+??TIME				  Text	 "14:41:46"
+??VERSION			  Number 040A
+@32BIT				  Text	 0
+@CODE				  Text	 _TEXT
+@CODESIZE			  Text	 0
+@CPU				  Text	 0F0FH
+@CURSEG				  Text	 _TEXT
+@DATA				  Text	 DGROUP
+@DATASIZE			  Text	 0
+@FILENAME			  Text	 LAB7
+@INTERFACE			  Text	 000H
+@MODEL				  Text	 2
+@STACK				  Text	 DGROUP
+@STARTUP			  Near	 _TEXT:0000
+@WORDSIZE			  Text	 2
+CHOICE				  Byte	 DGROUP:005B
+COLOR				  Byte	 DGROUP:005C
+DONE				  Near	 _TEXT:0102
+HORIZ				  Near	 _TEXT:006E
+MAIN				  Far	 _TEXT:0010
+START				  Near	 _TEXT:001D
+STRING				  Byte	 DGROUP:0001
+STRING2				  Byte	 DGROUP:000E
+STRING3				  Byte	 DGROUP:0040
+SYMBOL				  Byte	 DGROUP:0000
+VERTI				  Near	 _TEXT:00B8
+
+Macro Name
+
+ADVANCECURSOR
+CLEAR_SCREEN
+OUTCH
+OUTPUT
+PRINTCH
+SET_CURSOR
+WRITE_CHAR
+
+Groups & Segments		  Bit Size Align  Combine Class
+
+DGROUP				  Group
+  STACK				  16  0100 Para	  Stack	  STACK
+  _DATA				  16  005D Word	  Public  DATA
+_TEXT				  16  0106 Word	  Public  CODE
+

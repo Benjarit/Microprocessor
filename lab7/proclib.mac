@@ -1,0 +1,95 @@
+
+
+;------------------------------------------------------
+CLEAR_SCREEN  PROC
+;
+; Clears the screen (video page 0) and locates the
+; cursor at row 0, column 0.
+; Receives: nothing
+; Returns: nothing
+;-------------------------------------------------------
+      PUSHA
+      MOV AX,0600H ; SCROLL ENTIRE WINDOW UP
+      MOV CX,0     ; UPPER LEFT CORNER (0,0), CL=0, CH=0
+      MOV DX,184FH ; LOWER RIGHT CORNER (24,79)
+      MOV BH,1eh     ; NORMAL ATTRIBUTE  , Back=  Black, and Foreground= Green  BH=2
+      INT 10H      ; CALL BIOS
+      POPA
+      RET
+CLEAR_SCREEN ENDP
+
+
+;---------------------------------------------------
+SET_CURSOR PROC
+;
+; Sets the cursor position on video page 0.
+; Receives: DH,DL = row, column
+; Returns: nothing
+;---------------------------------------------------
+    PUSHA
+    MOV AH,02  ; SET CURSOR POSITION
+    MOV DL,col  ;  COLUMNS
+    MOV DH,row  ;  ROWS
+    MOV BH,0   ; VIDEO PAGE 0
+    INT 10H
+    POPA
+    RET
+SET_CURSOR ENDP
+
+;--------------------------------------------------
+AdvanceCursor PROC
+;
+; Advances the cursor n columns to the right.
+; (Cursor does not wrap around to the next line.)
+; Receives: CX = number of columns
+; Returns: nothing
+;--------------------------------------------------
+    PUSHA
+L1: PUSH CX ; SAVE LOOP COUNTER
+    MOV AH,3 ; GET CURSOR POSITION
+    MOV BH,0 ; INTO DH, DL
+    INT 10H ; CHANGES CX REGISTER!
+    INC DL ; INCREMENT COLUMN
+    MOV AH,2 ; SET CURSOR POSITION
+    INT 10H
+    POP CX ; RESTORE LOOP COUNTER
+    LOOP L1 ; NEXT COLUMN
+    POPA
+    REt
+AdvanceCursor ENDP
+
+;------------------------------------------------------
+WRITE_CHAR  PROC
+; Receives: AH = 9
+;           AL = ASCII code of character
+;           BH = video page
+;           BL = attribute
+;           CX = repetition count
+; Returns: nothing
+;The following are some possible variations of the attributes:
+; Binary        Hex      Result
+; 0000 000000 white on white (no display)
+; 0000 0111 07 white on black normal
+; 0000 1111 0F white on black highlight
+; 1000 0111 87 white on black blinking
+; 0111 011177 black on black (no display)
+; 0111 0000 70 black on white
+; 1111 0000 F0 black on white blinking
+;-------------------------------------------------------
+      PUSHA
+      MOV AH, 09 ;display option ; write character and attribute at cursor position.
+      MOV BH,00 ;page 0
+      MOV AL, CHAR ;the ASCII  letter
+      MOV CX, COUNT ;repeat it COUNT times
+      MOV BL, ATTRIBUTE ;attribute
+      INT 10H
+      POPA
+      RET
+WRITE_CHAR ENDP
+
+
+
+
+
+
+
